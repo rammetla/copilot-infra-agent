@@ -1,0 +1,21 @@
+{
+  "name": "infra-agent",
+  "description": "Provision Azure infra using enterprise Terraform modules and existing deployment pipelines.",
+  "arguments": [
+    { "name": "resource", "required": true },
+    { "name": "env", "required": true },
+    { "name": "inputs", "required": false }
+  ],
+  "prompt": {
+    "file": "prompts/infra-agent.md",
+    "inputs": ["resource", "env", "inputs"]
+  },
+  "tools": [
+    { "type": "github", "action": "repos.get" },
+    { "type": "github", "action": "search.code" },
+    { "type": "github", "action": "pulls.create" },
+    { "type": "github", "action": "workflows.run" },
+    { "type": "github", "action": "runs.get" },
+    { "type": "github", "action": "runs.logs" }
+  ]
+}

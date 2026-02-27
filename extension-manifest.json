@@ -1,0 +1,13 @@
+{
+  "name": "infra-agent",
+  "publisher": "Copilot-infra-agent",
+  "version": "1.0.0",
+  "displayName": "Azure Infra Agent",
+  "description": "Agent that provisions Azure infrastructure using existing Terraform modules and deploys via approved CI/CD pipelines.",
+  "categories": ["infrastructure", "automation"],
+  "commands": [
+    {
+      "file": "commands/infra-agent.json"
+    }
+  ]
+}
