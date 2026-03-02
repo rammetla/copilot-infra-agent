@@ -40,7 +40,7 @@ data "azurerm_subnet" "subnet" {
 
 # Reference existing Public IP
 data "azurerm_public_ip" "pip" {
-  name                = "${var.vm_name}-pip"
+  name                = "Sample-vm-pip"
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 
