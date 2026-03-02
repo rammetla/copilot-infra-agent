@@ -1,0 +1,32 @@
+{
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false
+  },
+  "github.copilot.chat.enabled": true,
+  "github.copilot.customAgents": [
+    {
+      "name": "infra-agent",
+      "displayName": "Azure Infrastructure Agent",
+      "description": "Query and deploy Azure infrastructure",
+      "repository": "rammetla/copilot-infra-agent",
+      "appId": "2986304",
+      "enabled": true,
+      "slashCommands": [
+        {
+          "name": "deploy",
+          "description": "Deploy infrastructure to specified environment"
+        },
+        {
+          "name": "query",
+          "description": "Query infrastructure configuration"
+        },
+        {
+          "name": "status",
+          "description": "Check deployment status"
+        }
+      ]
+    }
+  ]
+}
