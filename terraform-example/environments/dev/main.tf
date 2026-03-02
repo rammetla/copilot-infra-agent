@@ -1,16 +1,6 @@
 terraform {
-  required_version = ">= 1.0"# Call the Virtual Machine module
-module "virtual_machine" {
-  source = "../../modules/azure/virtual-machine"
-
-  vm_name             = var.vm_name
-  location            = data.azurerm_resource_group.rg.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  vm_size             = var.vm_size
-  admin_password      = var.admin_password
-  subnet_id           = data.azurerm_subnet.subnet.id
-  environment         = var.environment
-}ed_providers {
+  required_version = ">= 1.0"
+  required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 3.0"
@@ -54,11 +44,11 @@ module "virtual_machine" {
   source = "../../modules/azure/virtual-machine"
 
   vm_name             = var.vm_name
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
   vm_size             = var.vm_size
   admin_password      = var.admin_password
-  subnet_id           = azurerm_subnet.subnet.id
+  subnet_id           = data.azurerm_subnet.subnet.id
   environment         = var.environment
 }
 
