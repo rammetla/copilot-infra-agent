@@ -100,7 +100,7 @@ output "vm_name" {
 }
 
 output "vm_private_ip" {
-  value       = data.azurerm_network_interface.nic.private_ip_address
+  value       = azurerm_network_interface.nic.private_ip_addresses[0]
   description = "The private IP address of the VM"
 }
 
