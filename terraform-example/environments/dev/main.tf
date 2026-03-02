@@ -55,7 +55,7 @@ resource "azurerm_windows_virtual_machine" "vm" {
   name                = var.vm_name
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  vm_size             = var.vm_size
+  size                = var.vm_size
 
   admin_username = "azureuser"
   admin_password = var.admin_password
