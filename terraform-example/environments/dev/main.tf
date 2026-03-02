@@ -21,22 +21,34 @@ provider "azurerm" {
   features {}
 }
 
-# Data source to reference existing resource group
-data "azurerm_resource_group" "rg" {
-  name = var.resource_group_name
+# Create Resource Group
+resource "azurerm_resource_group" "rg" {
+  name     = var.resource_group_name
+  location = var.location
+
+  tags = {
+    Environment = var.environment
+  }
 }
 
-# Data source to reference existing virtual network
-data "azurerm_virtual_network" "vnet" {
+# Create Virtual Network
+resource "azurerm_virtual_network" "vnet" {
   name                = var.vnet_name
-  resource_group_name = var.resource_group_name
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg.name
+  address_space       = ["10.0.0.0/16"]
+
+  tags = {
+    Environment = var.environment
+  }
 }
 
-# Data source to reference existing subnet
-data "azurerm_subnet" "subnet" {
+# Create Subnet
+resource "azurerm_subnet" "subnet" {
   name                 = var.subnet_name
-  virtual_network_name = var.vnet_name
-  resource_group_name  = var.resource_group_name
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
 }
 
 # Call the virtual-machine module
@@ -45,10 +57,10 @@ module "virtual_machine" {
 
   vm_name             = var.vm_name
   location            = var.location
-  resource_group_name = var.resource_group_name
+  resource_group_name = azurerm_resource_group.rg.name
   vm_size             = var.vm_size
   admin_password      = var.admin_password
-  subnet_id           = data.azurerm_subnet.subnet.id
+  subnet_id           = azurerm_subnet.subnet.id
   environment         = var.environment
 }
 
