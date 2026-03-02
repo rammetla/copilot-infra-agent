@@ -44,10 +44,18 @@ data "azurerm_public_ip" "pip" {
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 
-# Reference existing Network Interface
-data "azurerm_network_interface" "nic" {
+# Create Network Interface
+resource "azurerm_network_interface" "nic" {
   name                = "${var.vm_name}-nic"
+  location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "testconfiguration1"
+    subnet_id                     = data.azurerm_subnet.subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = data.azurerm_public_ip.pip.id
+  }
 }
 
 # Create Windows Virtual Machine
@@ -61,7 +69,7 @@ resource "azurerm_windows_virtual_machine" "vm" {
   admin_password = var.admin_password
 
   network_interface_ids = [
-    data.azurerm_network_interface.nic.id,
+    azurerm_network_interface.nic.id,
   ]
 
   os_disk {
