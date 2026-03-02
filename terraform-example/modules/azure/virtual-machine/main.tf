@@ -8,8 +8,6 @@ resource "azurerm_windows_virtual_machine" "vm" {
   admin_username = "azureuser"
   admin_password = var.admin_password
 
-  disable_password_authentication = false
-
   network_interface_ids = [
     azurerm_network_interface.nic.id,
   ]
