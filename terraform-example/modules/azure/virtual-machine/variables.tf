@@ -24,6 +24,7 @@ variable "admin_password" {
   description = "Administrator password for the VM"
   type        = string
   sensitive   = true
+  default     = "P@ssw0rd1234!"
 }
 
 variable "subnet_id" {
