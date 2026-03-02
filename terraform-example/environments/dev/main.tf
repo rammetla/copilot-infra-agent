@@ -44,7 +44,7 @@ data "azurerm_public_ip" "pip" {
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 
-# Reference existing Network Interface
+# Reference existing Network Interface - DO NOT CREATE, only reference
 data "azurerm_network_interface" "nic" {
   name                = var.nic_name
   resource_group_name = data.azurerm_resource_group.rg.name
