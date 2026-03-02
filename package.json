@@ -1,0 +1,46 @@
+{
+  "name": "copilot-infra-agent",
+  "displayName": "Azure Infrastructure Agent",
+  "description": "GitHub Copilot agent for provisioning Azure infrastructure using Terraform modules and CI/CD pipelines",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "AI",
+    "Azure"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "copilot": {
+      "agents": [
+        {
+          "id": "infra-agent",
+          "name": "Azure Infrastructure Agent",
+          "description": "Provisions and manages Azure infrastructure using existing Terraform modules",
+          "when": "true",
+          "isDefault": false
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.92.0",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
+    "eslint": "^8.x",
+    "typescript": "^5.x"
+  }
+}
