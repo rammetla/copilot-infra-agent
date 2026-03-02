@@ -1,7 +1,16 @@
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.0"# Call the Virtual Machine module
+module "virtual_machine" {
+  source = "../../modules/azure/virtual-machine"
 
-  required_providers {
+  vm_name             = var.vm_name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  vm_size             = var.vm_size
+  admin_password      = var.admin_password
+  subnet_id           = data.azurerm_subnet.subnet.id
+  environment         = var.environment
+}ed_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 3.0"
@@ -21,33 +30,22 @@ provider "azurerm" {
   features {}
 }
 
-# Create Resource Group
-resource "azurerm_resource_group" "rg" {
-  name     = var.resource_group_name
-  location = var.location
-
-  tags = {
-    Environment = var.environment
-  }
+# Reference existing Resource Group
+data "azurerm_resource_group" "rg" {
+  name = var.resource_group_name
 }
 
-# Create Virtual Network
-resource "azurerm_virtual_network" "vnet" {
+# Reference existing Virtual Network
+data "azurerm_virtual_network" "vnet" {
   name                = var.vnet_name
-  location            = var.location
-  resource_group_name = azurerm_resource_group.rg.name
-  address_space       = ["10.0.0.0/16"]
-
-  tags = {
-    Environment = var.environment
-  }
+  resource_group_name = data.azurerm_resource_group.rg.name
 }
 
-# Create Subnet
-resource "azurerm_subnet" "subnet" {
+# Reference existing Subnet
+data "azurerm_subnet" "subnet" {
   name                 = var.subnet_name
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  resource_group_name  = data.azurerm_resource_group.rg.name
   address_prefixes     = ["10.0.1.0/24"]
 }
 
