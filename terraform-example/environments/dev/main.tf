@@ -38,35 +38,40 @@ data "azurerm_subnet" "subnet" {
   resource_group_name  = data.azurerm_resource_group.rg.name
 }
 
-# Call the virtual-machine module
-module "virtual_machine" {
-  source = "../../modules/azure/virtual-machine"
-
-  vm_name             = var.vm_name
-  location            = data.azurerm_resource_group.rg.location
+# Reference existing Public IP
+data "azurerm_public_ip" "pip" {
+  name                = "${var.vm_name}-pip"
   resource_group_name = data.azurerm_resource_group.rg.name
-  vm_size             = var.vm_size
-  admin_password      = var.admin_password
-  subnet_id           = data.azurerm_subnet.subnet.id
-  environment         = var.environment
+}
+
+# Reference existing Network Interface (if it exists)
+data "azurerm_network_interface" "nic" {
+  name                = "${var.vm_name}-nic"
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+# Reference existing VM (if it exists)
+data "azurerm_windows_virtual_machine" "vm" {
+  name                = var.vm_name
+  resource_group_name = data.azurerm_resource_group.rg.name
 }
 
 output "vm_id" {
-  value       = module.virtual_machine.vm_id
-  description = "The ID of the created Virtual Machine"
+  value       = data.azurerm_windows_virtual_machine.vm.id
+  description = "The ID of the Virtual Machine"
 }
 
 output "vm_name" {
-  value       = module.virtual_machine.vm_name
+  value       = data.azurerm_windows_virtual_machine.vm.name
   description = "The name of the Virtual Machine"
 }
 
 output "private_ip_address" {
-  value       = module.virtual_machine.private_ip_address
+  value       = data.azurerm_network_interface.nic.private_ip_address
   description = "The private IP address of the VM"
 }
 
 output "public_ip_address" {
-  value       = module.virtual_machine.public_ip_address
+  value       = data.azurerm_public_ip.pip.ip_address
   description = "The public IP address of the VM"
 }
