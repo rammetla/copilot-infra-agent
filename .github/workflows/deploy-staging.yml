@@ -17,6 +17,10 @@ env:
   AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
   AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
 
 jobs:
   plan:
@@ -35,7 +39,7 @@ jobs:
 
       - name: Terraform Initialize
         run: |
-          cd environments/staging
+          cd terraform-example/environments/staging
           terraform init
 
       - name: Create Terraform Variables File
@@ -46,7 +50,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          cd environments/staging
+          cd terraform-example/environments/staging
           terraform plan -var-file="terraform.tfvars" -var-file="/tmp/tfvars/override.json" -out=tfplan 2>&1 | tee plan_output.txt
           echo "PLAN_OUTPUT<<EOF" >> $GITHUB_OUTPUT
           cat plan_output.txt >> $GITHUB_OUTPUT
@@ -69,7 +73,7 @@ jobs:
 
       - name: Save Plan for Apply Job
         run: |
-          cd environments/staging
+          cd terraform-example/environments/staging
           mkdir -p /tmp/plans
           cp tfplan /tmp/plans/tfplan
         continue-on-error: true
@@ -78,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-plan
-          path: environments/staging/tfplan
+          path: terraform-example/environments/staging/tfplan
         if: steps.plan.outcome == 'success'
 
   apply:
@@ -100,11 +104,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: terraform-plan
-          path: environments/staging
+          path: terraform-example/environments/staging
 
       - name: Terraform Initialize
         run: |
-          cd environments/staging
+          cd terraform-example/environments/staging
           terraform init
 
       - name: Wait for Manual Approval
@@ -114,13 +118,12 @@ jobs:
 
       - name: Apply Terraform (requires approval)
         run: |
-          cd environments/staging
+          cd terraform-example/environments/staging
           terraform apply tfplan
-        if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
 
       - name: Output Results
         run: |
-          cd environments/staging
+          cd terraform-example/environments/staging
           terraform output -json
         if: success()
 

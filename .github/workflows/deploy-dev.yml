@@ -10,6 +10,17 @@ on:
         description: "Terraform variables as JSON"
         required: true
 
+env:
+  TERRAFORM_VERSION: 1.5.0
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,16 +32,16 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform Initialize
         run: |
-          cd environments/dev
+          cd terraform-example/environments/dev
           terraform init
 
       - name: Terraform Validate
         run: |
-          cd environments/dev
+          cd terraform-example/environments/dev
           terraform validate
 
       - name: Create Variables File
@@ -40,18 +51,18 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          cd environments/dev
+          cd terraform-example/environments/dev
           terraform plan -var-file="terraform.tfvars" -var-file="/tmp/override.json" -out=tfplan
 
       - name: Terraform Apply
         run: |
-          cd environments/dev
+          cd terraform-example/environments/dev
           terraform apply -auto-approve tfplan
 
       - name: Get Outputs
         id: outputs
         run: |
-          cd environments/dev
+          cd terraform-example/environments/dev
           terraform output -json > /tmp/outputs.json
           cat /tmp/outputs.json
 
@@ -59,4 +70,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: deployment-results
-          path: environments/dev/tfplan
+          path: terraform-example/environments/dev/tfplan
