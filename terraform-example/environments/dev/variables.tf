@@ -41,3 +41,9 @@ variable "admin_password" {
   type        = string
   sensitive   = true
 }
+
+variable "nic_name" {
+  description = "Name of the existing Network Interface"
+  type        = string
+  default     = "sample-vm-nic"
+}
