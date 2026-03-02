@@ -44,34 +44,59 @@ data "azurerm_public_ip" "pip" {
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 
-# Reference existing Network Interface (if it exists)
+# Reference existing Network Interface
 data "azurerm_network_interface" "nic" {
   name                = "${var.vm_name}-nic"
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 
-# Reference existing VM (if it exists)
-data "azurerm_windows_virtual_machine" "vm" {
+# Create Windows Virtual Machine
+resource "azurerm_windows_virtual_machine" "vm" {
   name                = var.vm_name
+  location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
+  vm_size             = var.vm_size
+
+  admin_username = "azureuser"
+  admin_password = var.admin_password
+
+  network_interface_ids = [
+    data.azurerm_network_interface.nic.id,
+  ]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Premium_LRS"
+  }
+
+  source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2022-Datacenter"
+    version   = "latest"
+  }
+
+  tags = {
+    environment = var.environment
+  }
 }
 
 output "vm_id" {
-  value       = data.azurerm_windows_virtual_machine.vm.id
-  description = "The ID of the Virtual Machine"
+  value       = azurerm_windows_virtual_machine.vm.id
+  description = "The ID of the created Virtual Machine"
 }
 
 output "vm_name" {
-  value       = data.azurerm_windows_virtual_machine.vm.name
-  description = "The name of the Virtual Machine"
+  value       = azurerm_windows_virtual_machine.vm.name
+  description = "The name of the created Virtual Machine"
 }
 
-output "private_ip_address" {
+output "vm_private_ip" {
   value       = data.azurerm_network_interface.nic.private_ip_address
   description = "The private IP address of the VM"
 }
 
-output "public_ip_address" {
+output "vm_public_ip" {
   value       = data.azurerm_public_ip.pip.ip_address
   description = "The public IP address of the VM"
 }
