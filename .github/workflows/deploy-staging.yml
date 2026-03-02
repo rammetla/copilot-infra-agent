@@ -1,0 +1,137 @@
+name: Deploy Infrastructure (Staging)
+
+on:
+  workflow_dispatch:
+    inputs:
+      resource_type:
+        description: "Type of resource to deploy (e.g., virtual-machine)"
+        required: true
+        default: "virtual-machine"
+      variables_json:
+        description: "Terraform variables as JSON"
+        required: true
+
+env:
+  TERRAFORM_VERSION: 1.5.0
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      plan_status: ${{ steps.plan.outcome }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Initialize
+        run: |
+          cd environments/staging
+          terraform init
+
+      - name: Create Terraform Variables File
+        run: |
+          mkdir -p /tmp/tfvars
+          echo '${{ github.event.inputs.variables_json }}' > /tmp/tfvars/override.json
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd environments/staging
+          terraform plan -var-file="terraform.tfvars" -var-file="/tmp/tfvars/override.json" -out=tfplan 2>&1 | tee plan_output.txt
+          echo "PLAN_OUTPUT<<EOF" >> $GITHUB_OUTPUT
+          cat plan_output.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create PR with Plan for Review
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const planOutput = `${{ steps.plan.outputs.PLAN_OUTPUT }}`;
+            
+            github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Auto] Deploy ${{ github.event.inputs.resource_type }} to staging`,
+              head: context.ref,
+              base: 'main',
+              body: `## Terraform Plan for Staging Environment\n\n### Resource Type: ${{ github.event.inputs.resource_type }}\n\n**⚠️ REQUIRES APPROVAL** - Review and approve before applying.\n\n\`\`\`\n${planOutput}\n\`\`\`\n\nTo approve and deploy, comment with: \`/approve-deploy\``
+            });
+
+      - name: Save Plan for Apply Job
+        run: |
+          cd environments/staging
+          mkdir -p /tmp/plans
+          cp tfplan /tmp/plans/tfplan
+        continue-on-error: true
+
+      - name: Upload Plan
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan
+          path: environments/staging/tfplan
+        if: steps.plan.outcome == 'success'
+
+  apply:
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: staging
+    if: needs.plan.outputs.plan_status == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Download Plan
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-plan
+          path: environments/staging
+
+      - name: Terraform Initialize
+        run: |
+          cd environments/staging
+          terraform init
+
+      - name: Wait for Manual Approval
+        run: |
+          echo "⏳ Waiting for manual approval..."
+          echo "Check the associated Pull Request for approval"
+
+      - name: Apply Terraform (requires approval)
+        run: |
+          cd environments/staging
+          terraform apply tfplan
+        if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
+
+      - name: Output Results
+        run: |
+          cd environments/staging
+          terraform output -json
+        if: success()
+
+      - name: Comment PR with Results
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ Staging deployment completed successfully!\n\nResource type: ${{ github.event.inputs.resource_type }}`
+            });
+        if: success()
