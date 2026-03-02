@@ -114,7 +114,42 @@ When asked about a **resource type** and **environment**:
 7. **Do not** create/modify workflows or code.
 
 ---
+## Workflow Automation & Deployment
 
+When a user requests infrastructure deployment:
+
+### 1. Collect Required Information
+- **environment**: Target environment (dev, staging, prod)
+- **resource_type**: Type of resource (virtual-machine, storage-account, etc.)
+- **variables**: Required Terraform variables for the resource
+
+### 2. Automatic Workflow Trigger
+**Do NOT ask the user to run commands manually.** Automatically trigger the GitHub Actions workflow using this approach:
+
+**PowerShell Command to Trigger Workflow:**
+```powershell
+$token = $env:GITHUB_PAT  # Read from environment variable
+$owner = $env:GITHUB_REPO_OWNER  # Read from environment
+$repo = $env:GITHUB_REPO_NAME  # Read from environment
+$workflow = "deploy-${environment}.yml"  # Dynamically set based on environment
+
+$headers = @{
+    "Authorization" = "Bearer $token"
+    "Accept" = "application/vnd.github+json"
+    "X-GitHub-Api-Version" = "2022-11-28"
+}
+
+$body = @{
+    "ref" = "main"
+    "inputs" = @{
+        "resource_type" = "$resource_type"
+        "variables_json" = (ConvertTo-Json $variables -Compress)
+    }
+} | ConvertTo-Json
+
+$url = "https://api.github.com/repos/$owner/$repo/actions/workflows/$workflow/dispatches"
+
+Invoke-WebRequest -Uri $url -Method POST -Headers $headers -Body $body -ContentType "application/json" -UseBasicParsing
 ## Required Information to Collect (Before Triggering)
 
 - **environment** — Target environment (e.g., `dev`, `staging`, `prod`) matching an existing workflow.
